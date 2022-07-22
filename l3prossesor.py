@@ -81,8 +81,8 @@ class L3Grid(object):
     self.constrain_lat()
     self.constrain_lon()
 
-    row = self.lat2row()
-    self.bin = self.rowlon2bin(row)
+    self.lat2row()
+    self.bin = self.rowlon2bin(self.row)
 
   # return binlon
 
