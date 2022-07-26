@@ -1,5 +1,5 @@
 from matplotlib.pyplot import grid
-import L3Grid
+#import L3Grid
 import numpy as np
 #import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,10 +13,9 @@ class L3Spatial(object):
     def __init__(self, grid, listl2, products):
 
         self.totbins = grid.totbins
-        self.lat = grid.lat
-        self.numrow = grid.numrow
+        self.numrows = grid.numrows
         self.basebin = grid.basebin
-        self.l2 = listl2
+        self.listl2 = listl2
         self.products = products
         self.grid = grid
 
@@ -26,9 +25,9 @@ class L3Spatial(object):
         SUMX = np.zeros((int(self.totbins), len(self.products)))
         SUMXX = np.zeros((int(self.totbins), len(self.products)))
         N =  np.zeros((int(self.totbins), ))
-        W =  np.zeros((int(self.totbins), ))
-        # NSEG = np.zeros((int(totbins), ))
-        TT = np.zeros((int(self.totbins), ))
+        # W =  np.zeros((int(self.totbins), ))
+        NSEG = np.zeros((int(self.totbins), ))
+        # TT = np.zeros((int(self.totbins), ))
 
         prod_stack = np.stack(l2['geophysical_data'][self.products[i]][:] for i in range(len(self.products))) # matriz de productos de dim (20, 2030, 1354)
         prod_rolled = np.rollaxis(np.rollaxis(prod_stack, 1,0), 2,1) # matriz de productos de dim (2030, 1354, 20)
@@ -40,11 +39,13 @@ class L3Spatial(object):
         
         boolean_mask = ((flags & (2**(bad_flags - 1)).sum()) == 0)
 
-        grid.lat, grid.lon = lat[boolean_mask], lon[boolean_mask]
+        # grid.lat = lat[boolean_mask] 
+        # grid.lon = lon[boolean_mask]
 
-        self.grid.latlon2bin()
+        self.grid.latlon2bin(lat[boolean_mask], lon[boolean_mask])
         idx = self.grid.bin
         idx = idx.astype(int)
+        
 
         XLOG = prod_rolled[boolean_mask]
         XXLOG = XLOG * XLOG
@@ -56,38 +57,38 @@ class L3Spatial(object):
             SUMX[indice] = XLOG[m].sum(axis=0)
             SUMXX[indice] = XXLOG[m].sum(axis=0)
             N[indice] = nobs
-            W[indice] = np.sqrt(nobs)
+            NSEG[indice] = 1
+            # W[indice] = np.sqrt(nobs)
 
-            SUMX[indice] = SUMX[indice] / W[indice]
-            SUMXX[indice]= SUMXX[indice]/W[indice]
+            # SUMX[indice] = SUMX[indice] / W[indice]
+            # SUMXX[indice]= SUMXX[indice]/W[indice]
         
-        return unique, N,  SUMX, SUMXX, W
+        return unique, N, NSEG,  SUMX, SUMXX
 
 
     def temporal_binnign(self):
-        SUMX = np.zeros((int(self.totbins), len(self.products)))
-        SUMXX = np.zeros((int(self.totbins), len(self.products)))
-        N =  np.zeros((int(self.totbins), ))
-        W =  np.zeros((int(self.totbins), )) 
-        # NSEG = np.zeros((int(totbins), ))
-        TT = np.zeros((int(self.totbins), ))
+        sumx = np.zeros((int(self.totbins), len(self.products)))
+        sumxx = np.zeros((int(self.totbins), len(self.products)))
+        n =  np.zeros((int(self.totbins), ))
+        w =  np.zeros((int(self.totbins), )) 
+        nseg = np.zeros((int(self.totbins), ))
+        # TT = np.zeros((int(self.totbins), ))
         bines = np.array([], dtype = int)
         
         for ds in self.listl2:
-            self.lat = ds['navigation_data']['latitude'][:]
-            self.lon = ds['navigation_data']['longitude'][:]
-            binesi, Ni,  SUMXi, SUMXXi, Wi, PROMXi, PROMXXi = self.get_spatial_bin_vectorized(ds)
+            lat = ds['navigation_data']['latitude'][:]
+            lon = ds['navigation_data']['longitude'][:]
+            binesi, Ni, NSEGI, SUMXi, SUMXXi = self.get_spatial_bin_vectorized(ds, lat, lon)
         
-            SUMX = SUMX + SUMXi
-            SUMXX = SUMXX + SUMXXi
-            N = N + Ni
+            sumx = sumx + SUMXi
+            sumxx = sumxx + SUMXXi
+            n = n + Ni
+            nseg = nseg + NSEGI
             bines = np.union1d(bines,binesi)
             
-        W = np.sqrt(N)
+        w = np.sqrt(n)
         for i in range(len(self.products)):
-            SUMX[bines,i] = SUMX[bines,i] / W[bines]
-            SUMXX[bines,i] = SUMXX[bines,i] / W[bines]
+            sumx[bines,i] = sumx[bines,i] / w[bines]
+            sumxx[bines,i] = sumxx[bines,i] / w[bines]
         
-        return bines, N, SUMX, SUMXX, W
-
-
+        return bines, n, nseg, sumx, sumxx, w

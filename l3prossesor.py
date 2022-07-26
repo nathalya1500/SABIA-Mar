@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import numpy as np
 #import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,10 +8,10 @@ import time
 
 class L3Grid(object):
 
-  def __init__(self, numrows, lat, lon):
+  def __init__(self, numrows):
     self.numrows = numrows
-    self.lat = lat
-    self.lon = lon
+    # self.lat = lat
+    # self.lon = lon
 
   def initbin(self):
     '''
@@ -34,55 +32,55 @@ class L3Grid(object):
 
     # return self.totbins, basebin, numbin, latbin
 
-  def lat2row(self):
+  def lat2row(self, lat):
     '''
     This method
     '''
-    self.row = 0*self.lat
-    self.row = (90 + self.lat)*self.numrows/180.0
+    self.row = 0*lat
+    self.row = (90 + lat)*self.numrows/180.0
     self.row = self.row.astype(int)
     self.row[self.row >= self.numrows] = self.numrows - 1
 
     #return row
 
-  def constrain_lon(self):
+  def constrain_lon(self, lon):
     '''
     This method
     '''
-    self.lon[self.lon <= -180] = self.lon[self.lon < -180] % 180
-    self.lon[self.lon >   180] = self.lon[self.lon>180] % -180
+    lon[lon <= -180] = lon[lon < -180] % 180
+    lon[lon >   180] = lon[lon>180] % -180
     
-    # return lon
+    return lon
 
-  def rowlon2bin(self):
+  def rowlon2bin(self, lon):
     '''
     This method
     '''
-    self.constrain_lon() #acá se pone l3 punto funcion ?
-    self.col = ((self.lon + 180.0) * self.numbin[self.row] / 360.0)
+    lon = self.constrain_lon(lon) #acá se pone l3 punto funcion ?
+    self.col = ((lon + 180.0) * self.numbin[self.row] / 360.0)
     self.col = self.col.astype(int)
     mask = np.where(self.col >= self.numbin[self.row])
     self.col[mask] = self.numbin[self.row[mask]] - 1 
 
     return self.basebin[self.row] + self.col
   
-  def constrain_lat(self):
-    self.lat[self.lat >  90] = 90
-    self.lat[self.lat < -90] = -90
+  def constrain_lat(self, lat):
+    lat[lat >  90] = 90
+    lat[lat < -90] = -90
 
-    # return lat
+    return lat
 
-  def latlon2bin(self):
+  def latlon2bin(self, lat, lon):
     '''
     given the lat/lon, return the bin number
     lon has to be in the range of -180.0 to 180.0
     '''
 
-    self.constrain_lat()
-    self.constrain_lon()
+    lat = self.constrain_lat(lat)
+    lon = self.constrain_lon(lon)
 
-    self.lat2row()
-    self.bin = self.rowlon2bin(self.row)
+    self.lat2row(lat)
+    self.bin = self.rowlon2bin(lon)
 
   # return binlon
 
