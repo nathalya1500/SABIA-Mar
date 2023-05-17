@@ -1,14 +1,10 @@
 from matplotlib.pyplot import grid
-#import L3Grid
 import numpy as np
-#import pandas as pd
 import matplotlib.pyplot as plt
 import h5py as h5
 
 
 class L3Spatial(object):
-
-    
 
     def __init__(self, grid, listl2, products):
 
