@@ -12,7 +12,7 @@ grid.initbin()
 
 import os
 
-Path = "/home/facu/Downloads/2022160/2022160/"
+Path = "./2022160/2022160/"
 filelist = os.listdir(Path)
 listl2 = []
 for f in filelist:
@@ -35,6 +35,13 @@ B = np.array(list(map(tuple, a)), dtype=dt)
 
 l3bd = {modisprod[i]: A[:, i] for i in range(20)}
 l3bd['BinList'] = B
+
+# with h5.File('test1.nc','w') as outputfile:
+#       grp = outputfile.create_group('level-3_binned_data')
+#       adict = l3bd
+
+#       for k,v in adict.items():
+#             grp.create_dataset(k,data=v)
 
 f=h5.File('test.nc','w')    
 grp=f.create_group('level-3_binned_data')
